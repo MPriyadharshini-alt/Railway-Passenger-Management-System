@@ -19,6 +19,9 @@ const { expirePendingPayments } = require('./services/payments.service');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+let databaseInitialization;
+let lastPaymentExpirySweep = 0;
+let paymentExpirySweep;
 const isProduction = process.env.NODE_ENV === 'production';
 const configuredOrigins = process.env.CORS_ORIGINS;
 const configuredOriginList = configuredOrigins
@@ -33,10 +36,6 @@ const localDevelopmentOrigins = [
 const allowedOrigins = isProduction
   ? configuredOriginList
   : [...new Set([...configuredOriginList, ...localDevelopmentOrigins])];
-
-if (isProduction && (!configuredOrigins || allowedOrigins.length === 0)) {
-  throw new Error('Set CORS_ORIGINS to the deployed frontend origin in production.');
-}
 
 app.set('trust proxy', 1);
 
@@ -69,6 +68,43 @@ app.use((req, res, next) => {
   return corsMiddleware(req, res, next);
 });
 app.use(express.json({ limit: '100kb' }));
+
+async function ensureServerlessDatabase() {
+  if (!databaseInitialization) {
+    databaseInitialization = connectDB()
+      .then(() => Payment.init())
+      .catch((err) => {
+        databaseInitialization = null;
+        throw err;
+      });
+  }
+  await databaseInitialization;
+
+  if (Date.now() - lastPaymentExpirySweep >= 60 * 1000) {
+    if (!paymentExpirySweep) {
+      paymentExpirySweep = expirePendingPayments()
+        .then(() => {
+          lastPaymentExpirySweep = Date.now();
+        })
+        .finally(() => {
+          paymentExpirySweep = null;
+        });
+    }
+    await paymentExpirySweep;
+  }
+}
+
+if (process.env.VERCEL) {
+  app.use('/api', (req, res, next) => {
+    ensureServerlessDatabase().then(
+      () => next(),
+      (err) => {
+        console.error('Vercel API initialization failed:', err.message);
+        res.status(503).json({ message: 'Service temporarily unavailable. Please try again.' });
+      }
+    );
+  });
+}
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -199,6 +235,11 @@ async function startServer() {
   process.once('SIGINT', () => shutdown('SIGINT'));
 }
 
-startServer();
+if (require.main === module) {
+  startServer().catch((err) => {
+    console.error('Server startup failed:', err.message);
+    process.exitCode = 1;
+  });
+}
 
 module.exports = app;

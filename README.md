@@ -56,15 +56,15 @@ Checkout offers UPI / Google Pay, debit card, and credit card as simulated choic
 
 ## Deployment and configuration
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for MongoDB Atlas and Render/Vercel configuration. The root [render.yaml](./render.yaml) configures the backend service and [client/vercel.json](./client/vercel.json) configures SPA route fallback.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for the MongoDB Atlas and combined Vercel deployment setup. The root [vercel.json](./vercel.json) configures the single-project deployment; the existing [render.yaml](./render.yaml) is not used for this setup.
 
 Important configuration:
 
-- Backend: `MONGODB_URI`, `JWT_SECRET` (32+ characters in production), `PORT`, `NODE_ENV`, `CORS_ORIGINS`.
-- Frontend: `VITE_API_BASE_URL=https://<backend-domain>/api`; see [client/.env.example](./client/.env.example).
+- Vercel: `MONGODB_URI`, `JWT_SECRET` (32+ characters in production), and `NODE_ENV=production`.
+- Frontend: leave `VITE_API_BASE_URL` unset; production requests use same-origin `/api`. See [client/.env.example](./client/.env.example).
 - Backend example: [.env.example](./.env.example).
 
-Production health/readiness is available at `/api/health`; it returns HTTP 503 if MongoDB is unavailable. Production CORS requires the exact deployed frontend origin.
+Production health/readiness is available at `/api/health`; it returns HTTP 503 if MongoDB is unavailable. Cross-origin requests are denied unless exact origins are explicitly allowlisted.
 
 ## Database and sample data
 
@@ -77,6 +77,7 @@ npm test
 $env:BASE_URL = "http://localhost:5000"
 node test_e2e.js
 npm run build:client
+npm run build:vercel
 ```
 
 Unit tests cover simulated payment safeguards and fare calculations. The local API integration script exercises authentication, admin authorization, search, payment success/failure/cancellation/expiry, fare validation, duplicate submission protection, booking cancellation, and seat restoration. It uses local seeded test accounts, then removes only the payment, booking, and notification records it created. Demo payments do not represent real transactions. Passing automated checks does not mean the public deployment has been verified.

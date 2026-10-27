@@ -12,6 +12,7 @@
     "dev:client": "npm --prefix client run dev",
     "dev": "node scripts/dev.js",
     "build:client": "npm --prefix client run build",
+    "build:vercel": "npm --prefix client run build -- --outDir ../public --emptyOutDir",
     "build": "npm run setup && npm run build:client",
     "test": "npm --prefix server test",
     "start": "node server/src/server.js",
@@ -27,5 +28,8 @@
     "react"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
 }

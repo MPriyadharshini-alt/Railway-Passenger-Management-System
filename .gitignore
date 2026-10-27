@@ -19,6 +19,7 @@ yarn-error.log*
 dist/
 build/
 client/dist/
+public/
 
 # Archives and databases
 *.zip

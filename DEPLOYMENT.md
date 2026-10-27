@@ -1,51 +1,44 @@
 # Deployment Guide
 
-The application deploys as an Express API with a React frontend and MongoDB Atlas. Payments are simulated in the application; there is no payment provider, gateway account, payment credential, or webhook to configure. Every completed payment is labeled as a demo and does not transfer money.
+The application deploys as a React frontend and Express API in one Vercel project, using MongoDB Atlas. Payments are simulated; no gateway account, credentials, or webhook is needed. Every completed payment is labeled as a demo and does not transfer money.
 
-Use Node.js 20 or later.
+Use Node.js 20 or later. Vercel's [Express runtime](https://vercel.com/docs/frameworks/backend/express) supports the API, and Vercel serves the Vite build from its static `public/` output. The API uses the same `/api` origin as the frontend.
 
 ## 1. Prepare production configuration
 
-1. Create a MongoDB Atlas cluster and a database user with access only to the application's database.
-2. Configure Atlas network access for the backend host.
+1. Use a MongoDB Atlas database user scoped to the application's database.
+2. Ensure Atlas Network Access permits Vercel's serverless connections. If the current allowlist only contains a developer's IP, the deployment cannot connect.
 3. Generate a unique `JWT_SECRET` of at least 32 characters.
 4. Provision an administrator using `scripts/provision-admin.js` with a strong password. Do not use demo seed credentials publicly.
-5. Keep database and hosting secrets out of source control. No payment secrets are needed.
+5. Keep all secrets in Vercel Project Settings, never in source control.
 
-Production startup does not seed demo users or trains. Existing database records are not deleted or migrated automatically. The development seed command only inserts sample records into empty collections; in production it refuses to run unless `ALLOW_DEMO_SEED=true` is explicitly set.
+Atlas replica-set deployments support the transactions used by the booking and simulated-payment flow. Production startup does not seed demo users or trains. Existing database records are not deleted or migrated automatically.
 
-## 2. Deploy the backend
+## 2. Import and configure the Vercel project
 
-For a host such as Render:
+Import `MPriyadharshini-alt/Railway-Passenger-Management-System` from GitHub and use these project settings:
 
-- Build command: `npm ci --prefix server && npm ci --prefix client && npm run build:client`
-- Start command: `npm start`
-- Health/readiness URL: `https://<backend-domain>/api/health`
+| Setting | Value |
+| --- | --- |
+| Framework preset | Express (auto-detected from the root `server.js`) |
+| Root directory | `.` (repository root) |
+| Install command | `npm ci && npm ci --prefix server && npm ci --prefix client` |
+| Build command | `npm run build:vercel` |
+| Output directory | Leave the default; Vercel serves the generated root `public/` directory |
 
-The root `render.yaml` defines the backend service, generated JWT secret, and prompts for the Atlas URI and frontend origin. Connect the repository to Render using its Blueprint flow and enter those values.
+Add these Production environment variables in Vercel. Enter secret values directly in Vercel; do not share them in chat or commit them:
 
-Required backend environment variables:
-
-| Variable | Required value |
+| Variable | Value |
 | --- | --- |
 | `NODE_ENV` | `production` |
-| `PORT` | Supplied by the host |
-| `MONGODB_URI` | Atlas connection string for the application database |
-| `JWT_SECRET` | Unique random value, at least 32 characters |
-| `CORS_ORIGINS` | Exact public frontend origin(s), comma-separated, no trailing slash |
+| `MONGODB_URI` | The Atlas connection string for the application database |
+| `JWT_SECRET` | A unique random value of at least 32 characters |
 
-The MongoDB deployment must support transactions; Atlas replica-set deployments do. `/api/health` returns HTTP 503 while MongoDB is unavailable.
+Do not set `VITE_API_BASE_URL`; the frontend defaults to the same-origin `/api` endpoint. `CORS_ORIGINS` is optional: same-origin requests work without it, and cross-origin requests are denied unless exact origins are explicitly allowlisted.
 
-## 3. Deploy the frontend
+The repository-root `server.js` exports the existing Express app as Vercel's documented Express entrypoint. The root `vercel.json` excludes `/api/*` from the SPA fallback and sends frontend routes to `index.html`. The existing `client/vercel.json` is for a standalone client deployment and is not used by the combined root project.
 
-For a static host such as Vercel:
-
-- Project root: `client`
-- Build command: `npm ci && npm run build`
-- Output directory: `dist`
-- Environment variable: `VITE_API_BASE_URL=https://<backend-domain>/api`
-
-`client/vercel.json` rewrites application routes to `index.html`. Add the exact Vercel origin to the backend's `CORS_ORIGINS` and redeploy the backend.
+After deployment, verify `https://<your-vercel-domain>/api/health`. It returns HTTP 503 if MongoDB is unavailable. Vercel serverless instances reuse MongoDB connections, and expired seat holds are swept during API traffic rather than by a persistent process timer.
 
 For local development, leave `VITE_API_BASE_URL` unset; Vite proxies `/api` to the local backend.
 
