@@ -1,0 +1,31 @@
+{
+  "name": "railway-passenger-platform",
+  "version": "1.0.0",
+  "description": "Railway Passenger Digital Platform",
+  "main": "server/src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "setup": "npm --prefix server install && npm --prefix client install",
+    "dev:server": "node --watch server/src/server.js",
+    "dev:client": "npm --prefix client run dev",
+    "dev": "node scripts/dev.js",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run setup && npm run build:client",
+    "test": "npm --prefix server test",
+    "start": "node server/src/server.js",
+    "seed": "node server/src/database/seed.js",
+    "zip": "node scripts/create_zip.js"
+  },
+  "keywords": [
+    "railway",
+    "passenger",
+    "booking",
+    "mongodb",
+    "express",
+    "react"
+  ],
+  "author": "",
+  "license": "ISC"
+}

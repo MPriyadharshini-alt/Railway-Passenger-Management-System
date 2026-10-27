@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing & Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build outputs
+dist/
+build/
+client/dist/
+
+# Archives and databases
+*.zip
+*.ZIP
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+
+# Credentials and private keys
+*credential*
+*credentials*
+*secret*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
