@@ -27,7 +27,7 @@ To provision a separate admin instead of using a local demo account:
 
 ```powershell
 $env:ADMIN_EMAIL = "admin@example.com"
-$env:ADMIN_PASSWORD = "<a-unique-strong-password>"
+$env:ADMIN_PASSWORD = "YourNewUniquePassword@2026"
 node scripts/provision-admin.js
 ```
 
