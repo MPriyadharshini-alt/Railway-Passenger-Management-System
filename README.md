@@ -1,5 +1,9 @@
 # Railway Passenger Digital Platform
 
+## Live Demo
+
+[Open the deployed application](https://railway-passenger-management-system.onrender.com/)
+
 Existing React, Express, and MongoDB application for passenger train search, ticketing, and railway administration. Checkout uses clearly labeled simulated payment methods only; no real payment gateway is connected. Train-running status is demonstration data, not a live railway or GPS feed.
 
 ## Local development
@@ -29,6 +33,8 @@ node scripts/provision-admin.js
 
 The password must be at least eight characters. The script hashes it and does not print it. Do not use sample/demo credentials on a public deployment.
 
+If Node.js reports `querySrv ECONNREFUSED` for an Atlas `mongodb+srv://` URI, set `MONGODB_DNS_SERVERS` to a DNS resolver reachable from your machine before running the script (for example, the DNS server configured for your network). This optional setting affects only the provisioning process; it does not change the Atlas URI or the production server's DNS configuration.
+
 ## Production build and start
 
 ```powershell
@@ -56,11 +62,11 @@ Checkout offers UPI / Google Pay, debit card, and credit card as simulated choic
 
 ## Deployment and configuration
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for the MongoDB Atlas and combined Vercel deployment setup. The root [vercel.json](./vercel.json) configures the single-project deployment; the existing [render.yaml](./render.yaml) is not used for this setup.
+The live application is hosted on Render: [Railway Passenger Digital Platform](https://railway-passenger-management-system.onrender.com/). The Render service configuration is in [render.yaml](./render.yaml). Configure the required production environment variables in the Render dashboard.
 
 Important configuration:
 
-- Vercel: `MONGODB_URI`, `JWT_SECRET` (32+ characters in production), and `NODE_ENV=production`.
+- Render: `MONGODB_URI`, `JWT_SECRET` (32+ characters in production), and `NODE_ENV=production`.
 - Frontend: leave `VITE_API_BASE_URL` unset; production requests use same-origin `/api`. See [client/.env.example](./client/.env.example).
 - Backend example: [.env.example](./.env.example).
 
@@ -77,7 +83,6 @@ npm test
 $env:BASE_URL = "http://localhost:5000"
 node test_e2e.js
 npm run build:client
-npm run build:vercel
 ```
 
 Unit tests cover simulated payment safeguards and fare calculations. The local API integration script exercises authentication, admin authorization, search, payment success/failure/cancellation/expiry, fare validation, duplicate submission protection, booking cancellation, and seat restoration. It uses local seeded test accounts, then removes only the payment, booking, and notification records it created. Demo payments do not represent real transactions. Passing automated checks does not mean the public deployment has been verified.
